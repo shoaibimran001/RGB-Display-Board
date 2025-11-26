@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login | RGB Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background:#0d1117;
+            color:white;
+            font-family:Arial;
+            text-align:center;
+            padding-top:100px;
+        }
+        input {
+            width:80%;
+            padding:12px;
+            margin:10px;
+            border-radius:8px;
+            border:none;
+        }
+        button {
+            width:85%;
+            padding:12px;
+            background:#238636;
+            border:none;
+            color:white;
+            font-size:18px;
+            border-radius:8px;
+            cursor:pointer;
+        }
+    </style>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+
+<body>
+
+<h2>🔐 RGB Display Login</h2>
+
+<input type="email" id="email" placeholder="Email"><br>
+<input type="password" id="password" placeholder="Password"><br>
+
+<button onclick="login()">Login</button>
+
+<script>
+  // TODO: REPLACE WITH YOUR FIREBASE CONFIG
+  const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  function login(){
+      let email = document.getElementById("email").value;
+      let password = document.getElementById("password").value;
+
+      firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+          window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+          alert("Login Failed: " + error.message);
+      });
+  }
+</script>
+
+</body>
+</html>
