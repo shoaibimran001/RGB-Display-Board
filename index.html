@@ -1,125 +1,130 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TEXT BOARD</title>
+  <title>Login | RGB Display</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body{
-      font-family: Arial, sans-serif;
-      background:#0f172a;
-      color:white;
-      padding:20px;
+    body { 
+      background: #0f172a; 
+      color: white; 
+      font-family: Arial;
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh; 
+      margin: 0;
     }
-    .card{
+    .box {
       background:#1e293b;
-      padding:20px;
+      padding:40px;
       border-radius:12px;
-      max-width:600px;
-      margin:auto;
-      box-shadow:0 2px 10px rgba(0,0,0,0.6);
+      width:90%;
+      max-width:400px;
+      box-shadow:0 0 20px rgba(0,0,0,0.6);
     }
-    label{display:block;margin-top:15px;margin-bottom:5px;font-size:14px;color:#cbd5e1}
-    input[type="text"],textarea{
-      width:100%;padding:10px;border-radius:8px;border:none;
-      background:#334155;color:white;font-size:15px;
+    input {
+      width:100%;
+      padding:12px;
+      margin-top:12px;
+      border-radius:8px;
+      border:none;
+      background:#334155;
+      color:white;
+      font-size:16px;
     }
-    input[type="color"]{
-      width:60px;height:30px;border:none;border-radius:8px;
-    }
-    input[type="range"]{width:100%}
-    button{
-      margin-top:15px;
-      padding:12px 18px;
+    button {
+      margin-top:20px;
+      width:100%;
+      padding:12px;
       background:#0ea5e9;
-      color:white;border:none;border-radius:8px;
-      cursor:pointer;font-size:15px;
+      border:none;
+      border-radius:8px;
+      font-size:18px;
+      color:white;
+      cursor:pointer;
     }
+    h2 { text-align:center; }
   </style>
-
 </head>
 
 <body>
 
-  <h2 align="center">TEXT BOARD</h2>
+<div class="box">
+  <h2>RGB Display Login</h2>
 
-  <div class="card">
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
 
-    <label>Scrolling Text</label>
-    <textarea id="text" rows="2" placeholder="Type message here...">HELLO</textarea>
+  <p id="msg"></p>
+</div>
 
-    <label>Choose Color</label>
-    <input type="color" id="colorPicker" value="#ff0000">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <label>Brightness (0–255)</label>
-    <input type="range" id="brightness" min="0" max="255" value="180">
+<script>
 
-    <label>Speed (ms per frame)</label>
-    <input type="range" id="speed" min="10" max="300" value="80">
+  /* Your Firebase config */
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
+    authDomain: "text-board-60a7a.firebaseapp.com",
+    databaseURL: "https://text-board-60a7a-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "text-board-60a7a",
+    storageBucket: "text-board-60a7a.firebasestorage.app",
+    messagingSenderId: "630642539714",
+    appId: "1:630642539714:web:33d952d608232065ce0f5b",
+    measurementId: "G-W77378YF08"
+  };
 
-    <button onclick="sendData()">UPDATE DISPLAY</button>
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
 
-    <p id="status"></p>
+  function login() {
+    let email = document.getElementById("email").value;
+    let pass = document.getElementById("password").value;
 
-  </div>
-
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <script>
-
-    // -----------------------------------------------------
-    // 🔥 STEP 1: CHANGE THESE TO YOUR FIREBASE CONFIG
-    // -----------------------------------------------------
-   const firebaseConfig = {
-  apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
-  authDomain: "text-board-60a7a.firebaseapp.com",
-  databaseURL: "https://text-board-60a7a-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "text-board-60a7a",
-  storageBucket: "text-board-60a7a.firebasestorage.app",
-  messagingSenderId: "630642539714",
-  appId: "1:630642539714:web:33d952d608232065ce0f5b",
-  measurementId: "G-W77378YF08"
-};
-    // -----------------------------------------------------
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    function hexToRgb(hex){
-      hex = hex.replace('#','');
-      return {
-        r: parseInt(hex.substring(0,2),16),
-        g: parseInt(hex.substring(2,4),16),
-        b: parseInt(hex.substring(4,6),16)
-      };
-    }
-
-    function sendData(){
-      let message = document.getElementById('text').value;
-      let hex = document.getElementById('colorPicker').value;
-      let b = document.getElementById('brightness').value;
-      let s = document.getElementById('speed').value;
-
-      let rgb = hexToRgb(hex);
-      let colorString = `${rgb.r},${rgb.g},${rgb.b}`;
-
-      db.ref("display").update({
-        text: message,
-        color: colorString,
-        brightness: Number(b),
-        speed: Number(s)
-      })
-      .then(()=>{
-        document.getElementById("status").innerHTML = "✔ Updated successfully!";
-      })
-      .catch((err)=>{
-        document.getElementById("status").innerHTML = "❌ Error: " + err;
-      });
-    }
-  </script>
+    auth.signInWithEmailAndPassword(email, pass)
+    .then(() => {
+        window.location.href = "index.html";
+    })
+    .catch((error) => {
+        document.getElementById("msg").innerHTML = 
+            "❌ " + error.message;
+    });
+  }
+</script>
 
 </body>
 </html>
+
+
+
+
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
+    authDomain: "text-board-60a7a.firebaseapp.com",
+    databaseURL: "https://text-board-60a7a-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "text-board-60a7a",
+    storageBucket: "text-board-60a7a.firebasestorage.app",
+    messagingSenderId: "630642539714",
+    appId: "1:630642539714:web:33d952d608232065ce0f5b",
+    measurementId: "G-W77378YF08"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // Protect dashboard
+  auth.onAuthStateChanged(user => {
+    if(!user){
+      window.location.href = "login.html";
+    }
+  });
+</script>
