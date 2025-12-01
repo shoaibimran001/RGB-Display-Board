@@ -60,49 +60,14 @@
   <p id="msg"></p>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-<script>
-
-  /* Your Firebase config */
-  const firebaseConfig = {
-    apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
-    authDomain: "text-board-60a7a.firebaseapp.com",
-    databaseURL: "https://text-board-60a7a-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "text-board-60a7a",
-    storageBucket: "text-board-60a7a.firebasestorage.app",
-    messagingSenderId: "630642539714",
-    appId: "1:630642539714:web:33d952d608232065ce0f5b",
-    measurementId: "G-W77378YF08"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  function login() {
-    let email = document.getElementById("email").value;
-    let pass = document.getElementById("password").value;
-
-    auth.signInWithEmailAndPassword(email, pass)
-    .then(() => {
-        window.location.href = "index.html";
-    })
-    .catch((error) => {
-        document.getElementById("msg").innerHTML = 
-            "❌ " + error.message;
-    });
-  }
-</script>
-
-</body>
-</html>
 
 
 
 
 
+
+
+  
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
