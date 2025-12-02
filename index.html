@@ -1,97 +1,342 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Login | RGB Display</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GRB-Display-Board</title>
   <style>
-    body { 
-      background: #0f172a; 
-      color: white; 
-      font-family: Arial;
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      height: 100vh; 
+    :root{
+      --card-bg:#111827; --muted:#9CA3AF; --accent:#06b6d4;
+      --glass: rgba(255,255,255,0.03);
+    }
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#071024 0%, #071827 100%);
+      color: #e6eef8;
       margin: 0;
+      padding: 28px;
     }
-    .box {
-      background:#1e293b;
-      padding:40px;
-      border-radius:12px;
-      width:90%;
-      max-width:400px;
-      box-shadow:0 0 20px rgba(0,0,0,0.6);
+    .wrap{max-width:980px;margin:0 auto;}
+    h1{font-size:1.6rem;margin:0 0 10px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .card{
+      background:var(--glass); padding:16px;border-radius:12px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.6); min-width:260px; flex:1;
     }
-    input {
-      width:100%;
-      padding:12px;
-      margin-top:12px;
-      border-radius:8px;
-      border:none;
-      background:#334155;
-      color:white;
-      font-size:16px;
+    label{display:block;color:var(--muted);font-size:0.85rem;margin-bottom:6px}
+    input[type="text"], input[type="number"], textarea{
+      width:100%; padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02); color:inherit; outline:none;
     }
-    button {
-      margin-top:20px;
-      width:100%;
-      padding:12px;
-      background:#0ea5e9;
-      border:none;
-      border-radius:8px;
-      font-size:18px;
-      color:white;
-      cursor:pointer;
+    input[type="range"]{width:100%}
+    .controls{display:flex;gap:10px;align-items:center}
+    button{background:var(--accent); color:#042; padding:10px 12px;border-radius:8px;border:none; cursor:pointer}
+    .small{font-size:0.85rem;color:var(--muted)}
+    .preset-colors{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .preset{width:32px;height:32px;border-radius:6px;cursor:pointer;border:2px solid rgba(255,255,255,0.06)}
+    .preview{
+      margin-top:12px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.02);
+      display:flex;align-items:center;gap:12px;
     }
-    h2 { text-align:center; }
+    .led-preview{width:320px;height:64px;background:#000;border-radius:6px;padding:8px;display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start}
+    .pixel{width:6px;height:6px;border-radius:2px;background:#000;box-shadow:0 0 6px rgba(0,0,0,0.9)}
+    .right-min{min-width:260px}
+    .hint{font-size:0.82rem;color:var(--muted);margin-top:8px}
+    footer{margin-top:18px;color:var(--muted);font-size:0.85rem}
+    a.link{color:var(--accent)}
   </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <h1>LED Matrix Dashboard (40 × 8) — Firebase RTDB</h1>
+    <div class="row">
+      <div class="card">
+        <label>Message text</label>
+        <textarea id="text" rows="3" placeholder="Type message to show on matrix...">HELLO</textarea>
 
-<div class="box">
-  <h2>RGB Display Login</h2>
+        <label style="margin-top:12px">Color</label>
+        <div class="controls">
+          <input id="colorPicker" type="color" value="#ff0000" />
+          <div style="flex:1">
+            <div class="preset-colors" id="presets">
+              <!-- Preset color swatches inserted by JS -->
+            </div>
+          </div>
+        </div>
 
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="password">
-  <button onclick="login()">Login</button>
+        <label style="margin-top:12px">Brightness <span id="bval" class="small"></span></label>
+        <input id="brightness" type="range" min="0" max="255" value="150" />
 
-  <p id="msg"></p>
-</div>
+        <label style="margin-top:12px">Speed (ms per frame)</label>
+        <input id="speed" type="range" min="10" max="500" value="80" />
+        <div class="hint">Lower = faster scroll. Typical: 40–120</div>
 
+        <div style="margin-top:12px; display:flex; gap:10px;">
+          <button id="applyBtn">Send to Display</button>
+          <button id="saveBtn" style="background:#334155">Save (local)</button>
+          <button id="restoreBtn" style="background:#374151">Restore from DB</button>
+        </div>
 
+        <div class="hint">This dashboard writes to <code>/display</code> in your Firebase Realtime Database.</div>
+      </div>
 
+      <div class="card right-min">
+        <label>Live preview</label>
+        <div class="preview">
+          <div class="led-preview" id="ledPreview" aria-hidden="true"></div>
+          <div style="flex:1">
+            <div><strong>Text:</strong> <span id="previewText">HELLO</span></div>
+            <div style="margin-top:8px"><strong>RGB:</strong> <span id="previewRGB">255,0,0</span></div>
+            <div style="margin-top:6px"><strong>Brightness:</strong> <span id="previewB">150</span></div>
+            <div style="margin-top:6px"><strong>Speed:</strong> <span id="previewS">80 ms</span></div>
+          </div>
+        </div>
 
+        <div style="margin-top:12px;">
+          <label>Realtime DB status</label>
+          <div id="status" class="small">Not connected</div>
+        </div>
 
+        <div style="margin-top:12px">
+          <label>Quick commands</label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="clearBtn" style="background:#7c3aed">Clear</button>
+            <button id="helloBtn" style="background:#0ea5b0">Hello</button>
+            <button id="rainbowBtn" style="background:#f97316">Rainbow</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <footer>
+      Instructions: 1) Update firebaseConfig (in the script). 2) Host this file on GitHub Pages (index.html). 3) Make sure your ESP32 code reads from /display nodes. <br>
+      DB structure used: <code>/display/text</code>, <code>/display/color</code>, <code>/display/brightness</code>, <code>/display/speed</code>.
+    </footer>
+  </div>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
-    authDomain: "text-board-60a7a.firebaseapp.com",
-    databaseURL: "https://text-board-60a7a-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "text-board-60a7a",
-    storageBucket: "text-board-60a7a.firebasestorage.app",
-    messagingSenderId: "630642539714",
-    appId: "1:630642539714:web:33d952d608232065ce0f5b",
-    measurementId: "G-W77378YF08"
-  };
+  <!-- Firebase (compat libs for simpler code). Replace version if needed -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  firebase.initializeApp(firebaseConfig);
+  <script>
+    // ---------- CONFIG: Put your Firebase project config here ----------
+   const firebaseConfig = {
+  apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
+  authDomain: "text-board-60a7a.firebaseapp.com",
+  databaseURL: "https://text-board-60a7a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "text-board-60a7a",
+  storageBucket: "text-board-60a7a.firebasestorage.app",
+  messagingSenderId: "630642539714",
+  appId: "1:630642539714:web:33d952d608232065ce0f5b",
+  measurementId: "G-W77378YF08"
+};
+    // ------------------------------------------------------------------
 
-  const auth = firebase.auth();
-  const db = firebase.database();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const DISPLAY_PATH = '/display';
 
-  // 🔒 Protect dashboard
-  auth.onAuthStateChanged(user => {
-    if(!user){
-      window.location.href = "login.html";
+    // UI elements
+    const textEl = document.getElementById('text');
+    const colorPicker = document.getElementById('colorPicker');
+    const brightness = document.getElementById('brightness');
+    const speed = document.getElementById('speed');
+    const applyBtn = document.getElementById('applyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const restoreBtn = document.getElementById('restoreBtn');
+    const statusEl = document.getElementById('status');
+    const ledPreview = document.getElementById('ledPreview');
+    const previewText = document.getElementById('previewText');
+    const previewRGB = document.getElementById('previewRGB');
+    const previewB = document.getElementById('previewB');
+    const previewS = document.getElementById('previewS');
+    const bval = document.getElementById('bval');
+
+    // Preset colors
+    const presets = [
+      '#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff','#00ffff',
+      '#ffffff','#ffa500','#800080','#00a86b'
+    ];
+    const presetContainer = document.getElementById('presets');
+    presets.forEach(c=>{
+      const d = document.createElement('div');
+      d.className='preset';
+      d.style.background = c;
+      d.addEventListener('click', ()=> { colorPicker.value = c; updatePreview(); });
+      presetContainer.appendChild(d);
+    });
+
+    // Create LED preview grid 40 x 8 (40 columns, 8 rows)
+    const COLS = 40, ROWS = 8;
+    function buildPreview(){
+      ledPreview.innerHTML = '';
+      for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+          const px = document.createElement('div');
+          px.className='pixel';
+          // keep an attribute for quick access
+          px.dataset.i = (r*COLS + c);
+          ledPreview.appendChild(px);
+        }
+      }
     }
-  });
-</script>
+    buildPreview();
 
-  
+    // Utility: hex -> r,g,b
+    function hexToRgb(hex){
+      const h = hex.replace('#','');
+      if(h.length===3) { return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)]; }
+      return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+    }
+
+    // Update local preview
+    function updatePreview(){
+      const [r,g,b] = hexToRgb(colorPicker.value);
+      const bri = parseInt(brightness.value);
+      previewText.textContent = textEl.value || '(empty)';
+      previewRGB.textContent = `${r},${g},${b}`;
+      previewB.textContent = bri;
+      previewS.textContent = `${speed.value} ms`;
+      bval.textContent = `(${bri})`;
+
+      // simple visual: fill entire 40x8 with chosen color at reduced intensity by brightness
+      const factor = (bri/255);
+      const pixels = ledPreview.querySelectorAll('.pixel');
+      pixels.forEach(p=>{
+        const rr = Math.round(r*factor), gg = Math.round(g*factor), bb = Math.round(b*factor);
+        p.style.background = `rgb(${rr},${gg},${bb})`;
+        p.style.boxShadow = `0 0 ${factor*8}px rgba(${rr},${gg},${bb},${Math.max(0.15,factor)})`;
+      });
+    }
+
+    // Write display object to Firebase
+    function writeDisplay({text, r,g,b, brightnessVal, speedVal}){
+      if(!text) text = '';
+      const colorStr = `${r},${g},${b}`;
+      const updates = {};
+      updates[DISPLAY_PATH + '/text'] = text;
+      updates[DISPLAY_PATH + '/color'] = colorStr;
+      updates[DISPLAY_PATH + '/brightness'] = parseInt(brightnessVal);
+      updates[DISPLAY_PATH + '/speed'] = parseInt(speedVal);
+      db.ref().update(updates)
+        .then(()=> { statusEl.textContent = 'Last update: ' + new Date().toLocaleTimeString(); })
+        .catch(err=> { statusEl.textContent = 'Write error: ' + err.message; });
+    }
+
+    // Read display from DB and set UI
+    function readDisplayOnce(){
+      db.ref(DISPLAY_PATH).once('value').then(snap=>{
+        const val = snap.val();
+        if(!val) return;
+        if(val.text !== undefined) textEl.value = val.text;
+        if(val.color !== undefined){
+          // color stored as "R,G,B"
+          const parts = String(val.color).split(',');
+          if(parts.length===3){
+            const hex = rgbToHex(parseInt(parts[0]),parseInt(parts[1]),parseInt(parts[2]));
+            colorPicker.value = hex;
+          }
+        }
+        if(val.brightness !== undefined) brightness.value = val.brightness;
+        if(val.speed !== undefined) speed.value = val.speed;
+        updatePreview();
+      }).catch(err=> { statusEl.textContent = 'Read error: ' + err.message; });
+    }
+
+    // Convert rgb to hex
+    function componentToHex(c) {
+      const hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
+    }
+    function rgbToHex(r,g,b) {
+      return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+
+    // Realtime listener: update UI when DB changes
+    db.ref(DISPLAY_PATH).on('value', (snap)=>{
+      statusEl.textContent = 'Connected (live)';
+      const val = snap.val();
+      if(!val) return;
+      if(val.text !== undefined) textEl.value = val.text;
+      if(val.color !== undefined){
+        const parts = String(val.color).split(',');
+        if(parts.length===3){
+          colorPicker.value = rgbToHex(parseInt(parts[0]),parseInt(parts[1]),parseInt(parts[2]));
+        }
+      }
+      if(val.brightness !== undefined) brightness.value = val.brightness;
+      if(val.speed !== undefined) speed.value = val.speed;
+      updatePreview();
+    }, (err)=>{
+      statusEl.textContent = 'DB listener error: ' + err;
+    });
+
+    // UI events
+    colorPicker.addEventListener('input', updatePreview);
+    brightness.addEventListener('input', updatePreview);
+    speed.addEventListener('input', updatePreview);
+    textEl.addEventListener('input', updatePreview);
+
+    applyBtn.addEventListener('click', ()=> {
+      const [r,g,b] = hexToRgb(colorPicker.value);
+      writeDisplay({
+        text: textEl.value,
+        r, g, b,
+        brightnessVal: brightness.value,
+        speedVal: speed.value
+      });
+    });
+
+    // quick saves locally (localStorage)
+    saveBtn.addEventListener('click', ()=>{
+      const cfg = {
+        text: textEl.value,
+        color: colorPicker.value,
+        brightness: brightness.value,
+        speed: speed.value
+      };
+      localStorage.setItem('led_cfg', JSON.stringify(cfg));
+      alert('Saved locally');
+    });
+    restoreBtn.addEventListener('click', ()=> readDisplayOnce());
+
+    // quick command buttons
+    document.getElementById('clearBtn').addEventListener('click', ()=>{
+      writeDisplay({text:'', r:0,g:0,b:0, brightnessVal:0, speedVal:100});
+    });
+    document.getElementById('helloBtn').addEventListener('click', ()=>{
+      const [r,g,b] = [255,255,0];
+      writeDisplay({text:'HELLO', r,g,b, brightnessVal:150, speedVal:100});
+    });
+    document.getElementById('rainbowBtn').addEventListener('click', ()=>{
+      // for rainbow, just set text and a magenta color as demo — more effects should be implemented on ESP32
+      writeDisplay({text:'RAINBOW', r:255,g:80,b:0, brightnessVal:200, speedVal:60});
+    });
+
+    // load local saved config if present
+    (function loadLocal(){
+      const s = localStorage.getItem('led_cfg');
+      if(s){
+        try{
+          const cfg = JSON.parse(s);
+          if(cfg.text) textEl.value = cfg.text;
+          if(cfg.color) colorPicker.value = cfg.color;
+          if(cfg.brightness) brightness.value = cfg.brightness;
+          if(cfg.speed) speed.value = cfg.speed;
+        }catch(e){}
+      }
+      updatePreview();
+    })();
+
+    // Small safety: inform user if firebaseConfig still placeholders
+    (function checkConfig(){
+      if(firebaseConfig.apiKey === "YOUR_API_KEY"){
+        statusEl.textContent = '⚠️ Replace firebaseConfig in the HTML with your Firebase project values.';
+      } else {
+        statusEl.textContent = 'Ready (Firebase config found) — connecting...';
+      }
+    })();
+  </script>
+</body>
+</html>
