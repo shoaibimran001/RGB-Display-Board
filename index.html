@@ -2,95 +2,194 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>LED Matrix Dashboard – Login</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>RGB-Display-Board</title>
 
 <style>
   :root{
-    --card-bg:#111827; --muted:#9CA3AF; --accent:#06b6d4;
-    --glass: rgba(255,255,255,0.05);
+    --bg1:#071024; --bg2:#071827;
+    --card: rgba(255,255,255,0.04);
+    --muted:#9CA3AF; --accent:#06b6d4; --danger:#ef4444;
+    --glass-border: rgba(255,255,255,0.04);
   }
-  body{
-    font-family: system-ui, Roboto, Arial;
-    background: linear-gradient(180deg,#071024 0%, #071827 100%);
-    color: #e6eef8; margin: 0; padding: 28px;
-    display:flex; flex-direction:column; min-height:100vh;
+
+  *{box-sizing:border-box}
+  html,body{
+    height:100%; margin:0;
+    font-family:system-ui,Roboto,Arial;
+    color:#e6eef8;
+    background:linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 100%);
   }
-  .wrap{max-width:900px;margin:0 auto;flex:1;}
+
+  .page{display:flex;flex-direction:column;min-height:100vh}
+  .container{flex:1;max-width:1100px;margin:0 auto;padding:18px;display:flex;flex-direction:column;gap:18px}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  header h1{font-size:1.25rem;margin:0;color:#eaf6fb}
+  #userInfo{font-size:0.95rem;color:var(--muted);word-break:break-all}
+
+  /* Cards */
   .card{
-    background:var(--glass); padding:20px;border-radius:14px;
-    box-shadow:0 6px 18px rgba(2,6,23,0.7);
-    margin-bottom:18px;
+    background:var(--card);
+    padding:18px;border-radius:12px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.55);
+    border:1px solid var(--glass-border);
   }
-  h1{margin:0 0 16px;}
-  label{display:block;font-size:0.85rem;color:var(--muted);margin-bottom:6px;}
-  input[type="email"],input[type="password"],textarea,input[type="range"],input[type="color"]{
-    width:100%; padding:10px; border-radius:8px;
-    border:1px solid rgba(255,255,255,0.1);
-    background:rgba(255,255,255,0.03); color:#fff;
+
+  .row{display:flex;gap:18px;align-items:flex-start}
+
+  /* Login area */
+  .left{flex:1 1 420px;display:flex;justify-content:center}
+  .login-card{
+    width:100%;max-width:480px;
+    background:var(--card);
+    padding:20px;border-radius:14px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.65);
   }
-  button{
-    background:var(--accent); color:#042;
-    border:none; padding:10px 16px;
-    border-radius:8px; cursor:pointer; font-weight:600;
+  .login-card h2{margin:0 0 10px;font-size:1.3rem;color:#eaf6fb}
+
+  label{display:block;color:var(--muted);font-size:1rem;margin-bottom:6px}
+  input[type="email"],input[type="password"],textarea,input[type="text"]{
+    width:100%;padding:14px;border-radius:10px;
+    border:1px solid rgba(255,255,255,0.06);
+    background:rgba(255,255,255,0.02);
+    color:inherit;font-size:1rem;outline:none;
   }
-  .controls{display:flex;gap:10px;margin-top:12px;}
-  footer{text-align:center;color:var(--muted);padding:12px;font-size:0.85rem;}
-  #dashboard{display:none;}
-  #loginBox{max-width:420px;margin:0 auto;}
+
+  .small-btn{
+    background:transparent;border:1px solid rgba(255,255,255,0.06);
+    color:var(--muted);padding:10px 12px;border-radius:10px;cursor:pointer;
+  }
+
+  .primary{
+    background:var(--accent);color:#042;
+    padding:12px 16px;border-radius:10px;border:none;cursor:pointer;
+    font-weight:700;font-size:1rem;
+  }
+  .primary[disabled]{opacity:0.65;cursor:not-allowed}
+
+  .helper-row{
+    margin-top:12px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+
+  .link-like{color:var(--accent);cursor:pointer;text-decoration:underline;font-weight:600}
+  .error{color:var(--danger);font-size:1rem;margin-top:12px;display:none}
+  .muted{color:var(--muted);margin-top:10px;font-size:0.95rem}
+
+  /* Dashboard */
+  .right{flex:1 1 520px}
+  .dashboard{display:none}
+
+  .controls{
+    display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;
+  }
+  .controls button{
+    flex:1 1 120px;padding:12px;border-radius:10px;border:none;
+    font-size:1rem;font-weight:700;
+  }
+  .controls .primary{flex:2 1 180px}
+
+  input[type="range"]{width:100%}
+  input[type="color"]{
+    width:64px;height:44px;padding:4px;border-radius:10px;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+
+  .status{margin-top:10px;color:var(--muted);font-size:0.95rem}
+
+  footer{text-align:center;color:var(--muted);padding:12px 0;font-size:0.92rem;border-top:1px solid rgba(255,255,255,0.03)}
+
+  /* MOBILE RESPONSIVE */
+  @media (max-width:860px){
+    .row{flex-direction:column}
+    .left,.right{width:100%}
+    .controls button{flex:1 1 100%;width:100%}
+    .primary{width:100%}
+    header h1{font-size:1.3rem}
+  }
+
+  @media (max-width:420px){
+    input,textarea{padding:12px;font-size:1.05rem}
+  }
 </style>
 </head>
 
 <body>
-<div class="wrap">
+<div class="page">
+  <div class="container">
 
-  <!-- LOGIN PAGE -->
-  <div id="loginBox" class="card">
-    <h1>Login</h1>
-    <label>Email</label>
-    <input id="email" type="email" placeholder="Enter email" />
+    <header>
+      <h1>RGB-Display-Board</h1>
+      <div id="userInfo"></div>
+    </header>
 
-    <label style="margin-top:12px">Password</label>
-    <input id="password" type="password" placeholder="Enter password" />
+    <div class="row">
 
-    <button id="loginBtn" style="margin-top:16px;width:100%">Login</button>
+      <!-- LOGIN -->
+      <div class="left">
+        <div class="login-card" id="loginCard">
+          <h2>Sign in</h2>
 
-    <div id="loginStatus" style="margin-top:12px;color:#f88;font-size:0.9rem;"></div>
-  </div>
+          <label>Email</label>
+          <input id="email" type="email" placeholder="you@example.com" />
 
-  <!-- DASHBOARD (Hidden until login) -->
-  <div id="dashboard">
-    <h1>LED Matrix Dashboard</h1>
+          <label style="margin-top:12px">Password</label>
+          <div style="display:flex;gap:8px">
+            <input id="password" type="password" placeholder="••••••••" />
+            <button id="togglePwd" class="small-btn">Show</button>
+          </div>
 
-    <div class="card">
-      <label>Message</label>
-      <textarea id="text" rows="3"></textarea>
+          <div class="helper-row">
+            <button id="loginBtn" class="primary">Login</button>
+            <button id="signupBtn" class="small-btn">Create</button>
+            <button id="forgotLink" class="link-like">Forgot?</button>
+          </div>
 
-      <label style="margin-top:12px">Color</label>
-      <input id="colorPicker" type="color" value="#ff0000" />
-
-      <label style="margin-top:12px">Brightness</label>
-      <input id="brightness" type="range" min="0" max="255" value="150" />
-
-      <label style="margin-top:12px">Speed (ms)</label>
-      <input id="speed" type="range" min="10" max="500" value="80" />
-
-      <div class="controls">
-        <button id="applyBtn">Send</button>
-        <button id="clearBtn" style="background:#7c3aed">Clear</button>
-        <button id="timeBtn" style="background:#0ea5b0">Time</button>
-        <button id="logoutBtn" style="background:#ef4444;color:white">Logout</button>
+          <div id="loginError" class="error"></div>
+          <div id="loginInfo" class="muted">Use your Firebase Email/Password.</div>
+        </div>
       </div>
 
-      <div id="status" style="margin-top:12px;color:var(--muted);font-size:0.85rem;">
-        Not connected
+      <!-- DASHBOARD -->
+      <div class="right">
+        <div class="card dashboard" id="dashboardWrap">
+
+          <label>Message</label>
+          <textarea id="text" rows="3" placeholder="Enter message..."></textarea>
+
+          <div style="display:flex;gap:14px;margin-top:12px">
+            <div>
+              <label>Color</label>
+              <input id="colorPicker" type="color" value="#ff0000" />
+            </div>
+
+            <div style="flex:1">
+              <label>Brightness</label>
+              <input id="brightness" type="range" min="0" max="255" value="150" />
+            </div>
+          </div>
+
+          <label style="margin-top:12px">Speed (ms)</label>
+          <input id="speed" type="range" min="10" max="500" value="80" />
+
+          <div class="controls">
+            <button id="applyBtn" class="primary">Send</button>
+            <button id="clearBtn" style="background:#7c3aed;color:white">Clear</button>
+            <button id="timeBtn" style="background:#0ea5b0;color:white">Time</button>
+            <button id="logoutBtn" style="background:#ef4444;color:white">Logout</button>
+          </div>
+
+          <div id="status" class="status">Not connected</div>
+        </div>
       </div>
+
     </div>
+
+    <footer>Created by Shoaib</footer>
+
   </div>
-
 </div>
-
-<footer>Created by Shoaib</footer>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -98,7 +197,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// FIREBASE CONFIG (yours)
+// FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAyqyDyeQXpwZ83DVVpV1JSnH0WGB_kPKg",
   authDomain: "text-board-60a7a.firebaseapp.com",
@@ -114,45 +213,34 @@ const auth = firebase.auth();
 const db = firebase.database();
 const PATH = "/display";
 
-
-// ---------------- LOGIN LOGIC -----------------
-const loginBox = document.getElementById("loginBox");
-const dashboard = document.getElementById("dashboard");
+// Login UI refs
+const loginCard = document.getElementById("loginCard");
 const loginBtn = document.getElementById("loginBtn");
-const loginStatus = document.getElementById("loginStatus");
+const signupBtn = document.getElementById("signupBtn");
+const forgotLink = document.getElementById("forgotLink");
+const loginError = document.getElementById("loginError");
+const userInfo = document.getElementById("userInfo");
+const togglePwd = document.getElementById("togglePwd");
+const emailInput = document.getElementById("email");
+const passInput = document.getElementById("password");
 
-loginBtn.addEventListener("click", ()=>{
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
+// Dashboard refs
+const dashboardWrap = document.getElementById("dashboardWrap");
+const applyBtn = document.getElementById("applyBtn");
+const clearBtn = document.getElementById("clearBtn");
+const timeBtn = document.getElementById("timeBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const textEl = document.getElementById("text");
+const colorPicker = document.getElementById("colorPicker");
+const brightness = document.getElementById("brightness");
+const speed = document.getElementById("speed");
+const statusEl = document.getElementById("status");
 
-  auth.signInWithEmailAndPassword(email, pass)
-  .then(()=>{
-    loginStatus.textContent = "";
-  })
-  .catch(err=>{
-    loginStatus.textContent = err.message;
-  });
-});
-
-// Show dashboard after login
-auth.onAuthStateChanged(user=>{
-  if(user){
-    loginBox.style.display = "none";
-    dashboard.style.display = "block";
-  } else {
-    loginBox.style.display = "block";
-    dashboard.style.display = "none";
-  }
-});
-
-// Logout
-document.getElementById("logoutBtn").onclick = ()=>{
-  auth.signOut();
-};
-
-
-
-// ---------------- DASHBOARD FUNCTIONS -----------------
+// Helpers
+function showError(msg){
+  loginError.style.display = msg ? "block" : "none";
+  loginError.textContent = msg || "";
+}
 function hexToRgb(hex){
   hex = hex.replace("#","");
   return [
@@ -161,38 +249,126 @@ function hexToRgb(hex){
     parseInt(hex.substring(4,6),16)
   ];
 }
-
-function sendData(text, r, g, b, bright, spd){
-  db.ref(PATH).update({
-    text: text,
-    color: `${r},${g},${b}`,
-    brightness: bright,
-    speed: spd
-  }).then(()=>{
-    document.getElementById("status").textContent = "Updated: " + new Date().toLocaleTimeString();
-  });
+function rgbToHex(r,g,b){
+  return "#" + [r,g,b].map(v=>{
+    const h = v.toString(16);
+    return h.length === 1 ? "0"+h : h;
+  }).join("");
 }
 
-// UI buttons
-document.getElementById("applyBtn").onclick = ()=>{
+// Toggle password visibility
+togglePwd.onclick = ()=>{
+  if(passInput.type === "password"){
+    passInput.type = "text";
+    togglePwd.textContent = "Hide";
+  } else {
+    passInput.type = "password";
+    togglePwd.textContent = "Show";
+  }
+};
+
+// LOGIN
+loginBtn.onclick = async ()=>{
+  showError("");
+  try{
+    await auth.signInWithEmailAndPassword(emailInput.value, passInput.value);
+  }catch(e){ showError(e.message); }
+};
+
+// SIGNUP
+signupBtn.onclick = async ()=>{
+  showError("");
+  if(passInput.value.length < 6){ showError("Password must be at least 6 characters"); return; }
+  try{
+    await auth.createUserWithEmailAndPassword(emailInput.value, passInput.value);
+  }catch(e){ showError(e.message); }
+};
+
+// FORGOT PASSWORD
+forgotLink.onclick = async ()=>{
+  if(!emailInput.value){ showError("Enter your email first"); return; }
+  try{
+    await auth.sendPasswordResetEmail(emailInput.value);
+    showError("Reset email sent");
+  }catch(e){ showError(e.message); }
+};
+
+// AUTH STATE CHANGE
+auth.onAuthStateChanged(user=>{
+  if(user){
+    loginCard.style.display = "none";
+    dashboardWrap.style.display = "block";
+    userInfo.textContent = user.email;
+
+    db.ref(PATH).once("value").then(snap=>{
+      const v = snap.val() || {};
+      if(v.text !== undefined) textEl.value = v.text;
+      if(v.color){
+        const c = v.color.split(",");
+        colorPicker.value = rgbToHex(Number(c[0]),Number(c[1]),Number(c[2]));
+      }
+      if(v.brightness !== undefined) brightness.value = v.brightness;
+      if(v.speed !== undefined) speed.value = v.speed;
+    });
+
+  } else {
+    loginCard.style.display = "block";
+    dashboardWrap.style.display = "none";
+    userInfo.textContent = "";
+  }
+});
+
+// LOGOUT
+logoutBtn.onclick = ()=> auth.signOut();
+
+// SEND MESSAGE
+applyBtn.onclick = ()=>{
   const [r,g,b] = hexToRgb(colorPicker.value);
-  sendData(text.value, r,g,b, brightness.value, speed.value);
+  db.ref(PATH).update({
+    text: textEl.value,
+    color: `${r},${g},${b}`,
+    brightness: Number(brightness.value),
+    speed: Number(speed.value)
+  }).then(()=>{
+    statusEl.textContent = "Updated: " + new Date().toLocaleTimeString();
+  });
 };
 
-document.getElementById("clearBtn").onclick = ()=>{
-  sendData("", 0,0,0, 0, 100);
+// CLEAR
+clearBtn.onclick = ()=>{
+  db.ref(PATH).update({
+    text: "",
+    color: "0,0,0",
+    brightness: 0,
+    speed: 100
+  });
 };
 
-document.getElementById("timeBtn").onclick = ()=>{
-  const now = new Date();
-  const t = now.toLocaleTimeString();
+// TIME (one time)
+timeBtn.onclick = ()=>{
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2,"0");
+  const mm = String(t.getMinutes()).padStart(2,"0");
+  const ss = String(t.getSeconds()).padStart(2,"0");
+  const formatted = `${hh}:${mm}:${ss}`;
+
   const [r,g,b] = hexToRgb(colorPicker.value);
-  sendData(t, r,g,b, brightness.value, speed.value);
+
+  db.ref(PATH).update({
+    text: formatted,
+    color: `${r},${g},${b}`,
+    brightness: Number(brightness.value),
+    speed: Number(speed.value)
+  });
 };
 
+// DB status
 db.ref(PATH).on("value", ()=>{
-  document.getElementById("status").textContent = "Connected";
+  statusEl.textContent = "Connected";
+}, ()=>{
+  statusEl.textContent = "DB Error";
 });
 </script>
+
 </body>
 </html>
